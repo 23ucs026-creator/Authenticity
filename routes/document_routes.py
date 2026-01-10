@@ -22,26 +22,34 @@ def extract_txt_text(file_path):
 document_bp = Blueprint("documents", __name__)
 ALLOWED_EXT = {"pdf", "docx", "txt"}
 
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXT
+
 
 @document_bp.route("/documents/upload", methods=["POST"])
 @jwt_required()
 def upload_document():
+    # 1. Check file part
     if "file" not in request.files:
         return jsonify({"msg": "No file part"}), 400
+
     file = request.files["file"]
+
     if file.filename == "":
         return jsonify({"msg": "No selected file"}), 400
+
     if not allowed_file(file.filename):
         return jsonify({"msg": "Unsupported file type"}), 400
 
+    # 2. Save file to uploads folder
     filename = secure_filename(file.filename)
     upload_folder = os.path.join(current_app.root_path, "uploads")
     os.makedirs(upload_folder, exist_ok=True)
     path = os.path.join(upload_folder, filename)
     file.save(path)
 
+<<<<<<< HEAD
     # Extract text based on file type
     ext = filename.rsplit(".", 1)[1].lower()
     try:
@@ -57,6 +65,14 @@ def upload_document():
         original_text = f"Extraction failed: {str(e)}"
 
     user_id = get_jwt_identity()
+=======
+    # 3. Get user id from JWT (stored as string, convert to int)
+    user_id = int(get_jwt_identity())
+
+    ext = filename.rsplit(".", 1)[1].lower()
+
+    # 4. Create Document record (text extraction can be added later)
+>>>>>>> 0c8b76ff396c77d759de0186bd270e7333d31c59
     doc = Document(
         user_id=user_id,
         filename=filename,
