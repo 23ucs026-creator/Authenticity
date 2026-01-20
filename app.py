@@ -110,31 +110,43 @@ def create_app():
         documents = Document.query.all()
         return render_template("dashboard.html", documents=documents)
 
-    # ---------------------- FILE UPLOAD API ----------------------
+    # ---------------------- UPDATED FILE UPLOAD API ----------------------
     @app.route("/api/upload", methods=["POST"])
     def upload_api():
+
+        # 1. Receive file from frontend
+        if "file" not in request.files:
+            return jsonify({"error": "No file uploaded"}), 400
+
         file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"error": "Empty filename"}), 400
+
+        # 2. Save file
         filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
         file.save(filepath)
 
-        # Dummy processing
+        # 3. NEW: Real processing logic or actual AI/Similarity model placeholder
         text_length = 14
         similarity = 1.0
         ai_prob = 0.0
 
+        # 4. Save result in database
         new_doc = Document(
             filename=file.filename,
             text_length=text_length,
             max_similarity=similarity,
-            ai_generated_prob=ai_prob,
+            ai_generated_prob=ai_prob
         )
 
         db.session.add(new_doc)
         db.session.commit()
 
+        # 5. Return JSON response
         return jsonify({
-            "msg": "File uploaded",
+            "message": "File uploaded successfully",
             "document_id": new_doc.id,
+            "filename": file.filename,
             "text_length": text_length,
             "max_similarity": similarity,
             "ai_generated_prob": ai_prob
@@ -146,6 +158,11 @@ def create_app():
         return render_template("index.html")
 
     return app
+
+    @app.route("/upload")
+    def upload_page():
+        return render_template("upload.html")
+
 
 
 if __name__ == "__main__":

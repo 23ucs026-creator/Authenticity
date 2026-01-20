@@ -11,28 +11,28 @@
 
 <div class="container">
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Filename</th>
-                <th>Similarity</th>
-                <th>AI Probability</th>
-                <th>Text Length</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for d in documents %}
-                <tr>
-                    <td>{{ d.id }}</td>
-                    <td>{{ d.filename }}</td>
-                    <td>{{ d.max_similarity }}</td>
-                    <td>{{ d.ai_generated_prob }}</td>
-                    <td>{{ d.text_length }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <table border="1" cellpadding="6">
+    <tr>
+        <th>ID</th>
+        <th>Filename</th>
+        <th>Similarity</th>
+        <th>AI Probability</th>
+        <th>Text Length</th>
+    </tr>
+
+    {% for doc in documents %}
+    <tr>
+        <td>{{ doc.id }}</td>
+        <td>{{ doc.filename }}</td>
+        <td>{{ doc.max_similarity }}</td>
+        <td>{{ doc.ai_generated_prob }}</td>
+        <td>{{ doc.text_length }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<p><a href="/upload.html">Upload New Document</a></p>
+
 
 </div>
 
