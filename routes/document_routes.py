@@ -9,6 +9,7 @@ from models.document import Document
 from utils.text_extractor import extract_text
 from utils.text_preprocessing import preprocess_text
 from utils.plagiarism import calculate_plagiarism
+from utils.ai_detector import ai_probability_score
 
 document_bp = Blueprint("documents", __name__)
 
@@ -22,7 +23,6 @@ def allowed_file(filename):
 @jwt_required()
 def upload_document():
 
-    # ---- file validation (unchanged) ----
     if "file" not in request.files:
         return jsonify({"msg": "No file part"}), 400
 
@@ -43,7 +43,7 @@ def upload_document():
     ext = filename.rsplit(".", 1)[1].lower()
     user_id = get_jwt_identity()
 
-    # ---- create DB row first ----
+    # Create DB row first
     doc = Document(
         user_id=user_id,
         filename=filename,
@@ -52,19 +52,15 @@ def upload_document():
     db.session.add(doc)
     db.session.commit()
 
-    # ==================================================
-    # ✅ PLACE THE CODE *HERE* (THIS IS THE CORRECT SPOT)
-    # ==================================================
-
+    # ---------- TEXT EXTRACTION ----------
     raw_text = extract_text(path, ext)
-    print("RAW TEXT LENGTH:", len(raw_text))
 
-    # Optional but STRONGLY recommended
     if not raw_text or not raw_text.strip():
         return jsonify({"msg": "No readable text found in document"}), 400
 
     clean_text = preprocess_text(raw_text)
 
+    # ---------- PLAGIARISM ----------
     existing_docs = Document.query.filter(
         Document.original_text.isnot(None),
         Document.id != doc.id
@@ -73,15 +69,24 @@ def upload_document():
     existing_texts = [d.original_text for d in existing_docs]
     plagiarism_score = calculate_plagiarism(clean_text, existing_texts)
 
+    # ---------- AI DETECTION ----------
+    ai_prob = ai_probability_score(clean_text)
+
+    # ---------- SAVE RESULTS ----------
     doc.original_text = clean_text
     doc.plagiarism_score = plagiarism_score
+    doc.ai_generated_prob = ai_prob
+
     db.session.commit()
 
     return jsonify({
         "msg": "File uploaded and analyzed",
         "document_id": doc.id,
-        "plagiarism_score": plagiarism_score
+        "plagiarism_score": round(plagiarism_score * 100, 2),
+        "ai_generated_probability": round(ai_prob * 100, 2)
     }), 201
+
+
 
 
 @document_bp.route("/dashboard", methods=["GET"])
@@ -95,7 +100,9 @@ def dashboard():
             "filename": d.filename,
             "user_id": d.user_id,
             "text_length": len(d.original_text) if d.original_text else 0,
-            "plagiarism_score": d.plagiarism_score or 0.0
+            "plagiarism_score": d.plagiarism_score or 0.0,
+            "ai_generated_prob": round((d.ai_generated_prob or 0.0) * 100, 2)
+
         })
 
     return render_template("dashboard.html", documents=docs_for_display)

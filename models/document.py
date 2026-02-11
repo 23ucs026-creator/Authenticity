@@ -3,6 +3,7 @@ from extensions import db
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     user_id = db.Column(db.Integer, nullable=False)
 
     filename = db.Column(db.String(255), nullable=False)
@@ -13,3 +14,5 @@ class Document(db.Model):
     original_text = db.Column(db.Text, nullable=True)
 
     plagiarism_score = db.Column(db.Float, default=0.0)
+
+    ai_generated_prob = db.Column(db.Float, default=0.0)   # ✅ ADD THIS
