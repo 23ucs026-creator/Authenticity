@@ -37,22 +37,25 @@ def create_app():
     # ---------------- ROUTES ----------------
     @app.route("/")
     def index():
+        return redirect(url_for("login"))
+
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            username = request.form["username"]
+            password = request.form["password"]
+
+            user = User.query.filter_by(username=username).first()
+            if not user or not check_password_hash(user.password, password):
+                return render_template("auth.html", error="Invalid credentials")
+
+            session["user_id"] = user.id
+            session["username"] = user.username
+            return redirect(url_for("dashboard"))
+
         return render_template("auth.html")
 
-
-    @app.route("/", methods=["GET", "POST"])
-    @app.route("/login", methods=["POST"])
-    def login():
-        username = request.form["username"]
-        password = request.form["password"]
-
-        user = User.query.filter_by(username=username).first()
-        if not user or not check_password_hash(user.password, password):
-            return render_template("auth.html", error="Invalid credentials")
-
-        session["user_id"] = user.id
-        session["username"] = user.username
-        return redirect(url_for("dashboard"))
 
 
     @app.route("/logout")
@@ -63,16 +66,28 @@ def create_app():
     @app.route("/create_user", methods=["GET", "POST"])
     def create_user():
         if request.method == "POST":
-            user = User(
-                username=request.form["username"],
-                email=request.form["email"],
-                password=generate_password_hash(request.form["password"])
-            )
-            db.session.add(user)
-            db.session.commit()
-            return redirect(url_for("login"))
+            username = request.form["username"]
+            email = request.form["email"]
+            password = request.form["password"]
 
-        return render_template("create_user.html")
+            existing_user = User.query.filter(
+                (User.username == username) | (User.email == email)
+            ).first()
+
+        if existing_user:
+            return render_template("create_user.html", error="Username or Email already exists")
+
+        user = User(
+            username=username,
+            email=email,
+            password=generate_password_hash(password)
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        return redirect(url_for("login"))
+
 
     @app.route("/dashboard")
     def dashboard():
