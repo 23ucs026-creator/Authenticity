@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, redirect, url_for, session, jsonify
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify, flash
+
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -11,6 +12,11 @@ from models.document import Document
 from utlis.text_extractor import extract_text_from_file
 from utlis.plagiarism import calculate_plagiarism,clean_text
 from utlis.ai_detector import ai_probability_score
+
+import io
+import base64
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 
@@ -103,6 +109,73 @@ def create_app():
         docs = Document.query.all()
         return render_template("dashboard.html", documents=docs)
 
+    
+    @app.route("/admin")
+    def admin_dashboard():
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        # Optional: add role check later
+
+        total_users = User.query.count()
+        total_docs = Document.query.count()
+
+        docs = Document.query.all()
+
+        avg_plagiarism = 0
+        avg_ai = 0
+        max_plagiarism = 0
+
+        if docs:
+            avg_plagiarism = sum(d.plagiarism_score for d in docs) / len(docs)
+            avg_ai = sum(d.ai_generated_prob for d in docs) / len(docs)
+            max_plagiarism = max(d.plagiarism_score for d in docs)
+
+        return render_template(
+            "admin_dashboard.html",
+            total_users=total_users,
+            total_docs=total_docs,
+            avg_plagiarism=round(avg_plagiarism, 2),
+            avg_ai=round(avg_ai, 2),
+            max_plagiarism=round(max_plagiarism, 2),
+            documents=docs
+        )
+    
+    @app.route("/similarity-graph")
+    def similarity_graph():
+        docs = Document.query.all()
+        texts = [d.original_text for d in docs if d.original_text]
+
+        if len(texts) < 2:
+            return "Not enough documents to compare"
+
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.metrics.pairwise import cosine_similarity
+
+        vectorizer = TfidfVectorizer()
+        tfidf_matrix = vectorizer.fit_transform(texts)
+        similarity_matrix = cosine_similarity(tfidf_matrix)
+
+        # Plot heatmap
+        fig, ax = plt.subplots()
+        cax = ax.matshow(similarity_matrix)
+        fig.colorbar(cax)
+
+        plt.title("Document Similarity Matrix")
+
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png")
+        buf.seek(0)
+
+        image_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+        plt.close()
+
+        return render_template(
+            "similarity_graph.html",
+            image=image_base64
+        )
+
+
     @app.route("/upload", methods=["GET", "POST"])
     def upload():
         if "user_id" not in session:
@@ -155,14 +228,9 @@ def create_app():
             db.session.add(doc)
             db.session.commit()
 
-            return jsonify({
-                "msg": "File uploaded and analyzed",
-                "document_id": doc.id,
-                "plagiarism_score": plagiarism_score,
-                "similarity_report": similarity_report,
-                "ai_probability": ai_prob
-            }), 201
-            return render_template("dashboard.html")
+            flash("File uploaded and analyzed successfully!")
+            return redirect(url_for("dashboard"))
+
     
 
         return render_template("upload.html")

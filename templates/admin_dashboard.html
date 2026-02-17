@@ -1,0 +1,28 @@
+<h1>Admin Dashboard</h1>
+
+<p>Total Users: {{ total_users }}</p>
+<p>Total Documents: {{ total_docs }}</p>
+<p>Average Plagiarism: {{ avg_plagiarism }}%</p>
+<p>Average AI Probability: {{ avg_ai }}%</p>
+<p>Highest Plagiarism Case: {{ max_plagiarism }}%</p>
+
+<hr>
+
+<h2>Recent Documents</h2>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Filename</th>
+        <th>Plagiarism %</th>
+        <th>AI Probability %</th>
+    </tr>
+
+    {% for doc in documents %}
+    <tr>
+        <td>{{ doc.id }}</td>
+        <td>{{ doc.filename }}</td>
+        <td>{{ doc.plagiarism_score }}%</td>
+        <td>{{ doc.ai_generated_prob }}%</td>
+    </tr>
+    {% endfor %}
+</table>
