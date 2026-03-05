@@ -68,6 +68,7 @@
                             <th>Plagiarism %</th>
                             <th>AI Probability</th>
                             <th>Text Length</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -86,6 +87,11 @@
                                 </span>
                             </td>
                             <td>{{ doc.original_text|length if doc.original_text else 0 }}</td>
+                             <td>
+                                <a href="/document/{{ doc.id }}" class="btn btn-sm btn-outline-primary">
+                                View Details
+                                </a>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

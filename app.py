@@ -18,6 +18,9 @@ import base64
 import matplotlib.pyplot as plt
 import numpy as np
 
+from utlis.plagiarism_engine import check_plagiarism
+from models.document import Document
+import json
 
 
 
@@ -175,6 +178,22 @@ def create_app():
             image=image_base64
         )
 
+    @app.route("/document/<int:doc_id>")
+    def document_detail(doc_id):
+
+        doc = Document.query.get_or_404(doc_id)
+
+        report = []
+
+        if doc.similarity_report:
+            report = json.loads(doc.similarity_report)
+
+        return render_template(
+            "document_detail.html",
+            doc=doc,
+            report=report
+    )
+
 
     @app.route("/upload", methods=["GET", "POST"])
     def upload():
@@ -207,10 +226,7 @@ def create_app():
             ]
 
             # 4️⃣ Calculate plagiarism
-            plagiarism_score, similarity_report = calculate_plagiarism(
-                processed_text,
-                existing_texts
-            )
+            plagiarism_score, similarity_report = check_plagiarism(text, existing_docs)
 
             # 5️⃣ Calculate AI probability
             ai_prob = ai_probability_score(text)
@@ -222,7 +238,8 @@ def create_app():
                 file_type=filename.rsplit(".", 1)[-1],
                 original_text=processed_text,
                 plagiarism_score=plagiarism_score,
-                ai_generated_prob=ai_prob
+                ai_generated_prob=ai_prob,
+                similarity_report=json.dumps(similarity_report)
             )
 
             db.session.add(doc)

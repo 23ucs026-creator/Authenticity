@@ -16,3 +16,5 @@ class Document(db.Model):
     plagiarism_score = db.Column(db.Float, default=0.0)
 
     ai_generated_prob = db.Column(db.Float, default=0.0)   # ✅ ADD THIS
+
+    similarity_report = db.Column(db.Text)
