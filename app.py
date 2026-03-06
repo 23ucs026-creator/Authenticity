@@ -22,6 +22,8 @@ from utlis.plagiarism_engine import check_plagiarism
 from models.document import Document
 import json
 
+from utlis.analytics import generate_plagiarism_chart
+
 
 
 def create_app():
@@ -67,7 +69,12 @@ def create_app():
 
             session["user_id"] = user.id
             session["username"] = user.username
-            return redirect(url_for("dashboard"))
+            session["role"] = user.role   # ✅ ADD THIS
+
+            if user.role == "admin":
+                return redirect(url_for("admin_dashboard"))
+            else:
+                return redirect(url_for("dashboard"))
 
         return render_template("auth.html")
 
@@ -95,7 +102,8 @@ def create_app():
         user = User(
             username=username,
             email=email,
-            password=generate_password_hash(password)
+            password=generate_password_hash(password),
+            role="user"
         )
 
         db.session.add(user)
@@ -115,32 +123,40 @@ def create_app():
     
     @app.route("/admin")
     def admin_dashboard():
-        if "user_id" not in session:
-            return redirect(url_for("login"))
 
-        # Optional: add role check later
+        if session.get("role") != "admin":
+            return redirect(url_for("dashboard"))
 
         total_users = User.query.count()
-        total_docs = Document.query.count()
 
         docs = Document.query.all()
 
-        avg_plagiarism = 0
-        avg_ai = 0
-        max_plagiarism = 0
+        total_docs = len(docs)
 
-        if docs:
-            avg_plagiarism = sum(d.plagiarism_score for d in docs) / len(docs)
-            avg_ai = sum(d.ai_generated_prob for d in docs) / len(docs)
-            max_plagiarism = max(d.plagiarism_score for d in docs)
+        avg_plagiarism = round(
+            sum(d.plagiarism_score for d in docs) / total_docs, 2
+        )   if total_docs > 0 else 0
+
+        avg_ai = round(
+            sum(d.ai_generated_prob for d in docs) / total_docs, 2
+        ) if total_docs > 0 else 0
+
+        max_plagiarism = max(
+            (d.plagiarism_score for d in docs),
+            default=0
+        )
+
+        # ✅ ADD THIS HERE
+        scores = [d.plagiarism_score for d in docs]
+        generate_plagiarism_chart(scores)
 
         return render_template(
             "admin_dashboard.html",
             total_users=total_users,
             total_docs=total_docs,
-            avg_plagiarism=round(avg_plagiarism, 2),
-            avg_ai=round(avg_ai, 2),
-            max_plagiarism=round(max_plagiarism, 2),
+            avg_plagiarism=avg_plagiarism,
+            avg_ai=avg_ai,
+            max_plagiarism=max_plagiarism,
             documents=docs
         )
     
@@ -219,17 +235,13 @@ def create_app():
             processed_text = clean_text(text)
 
             # 3️⃣ Get existing documents
-            existing_texts = [
-                d.original_text
-                for d in Document.query.all()
-                if d.original_text
-            ]
+            existing_docs = Document.query.all()
 
             # 4️⃣ Calculate plagiarism
-            plagiarism_score, similarity_report = check_plagiarism(text, existing_texts)
+            plagiarism_score, similarity_report = check_plagiarism(processed_text, existing_docs)
 
             # 5️⃣ Calculate AI probability
-            ai_prob = ai_probability_score(text)
+            ai_prob = ai_probability_score(processed_text)
 
             # 6️⃣ Save to DB
             doc = Document(

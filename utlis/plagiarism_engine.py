@@ -1,31 +1,44 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+import difflib
+import re
+
+def split_sentences(text):
+    return re.split(r'[.!?]', text)
+
+
+def similarity(a, b):
+    return difflib.SequenceMatcher(None, a, b).ratio()
 
 
 def check_plagiarism(new_text, documents):
 
-    if not documents:
-        return 0, []
+    new_sentences = split_sentences(new_text)
 
-    texts = [doc.original_text for doc in documents]  # ✅ FIXED
-    texts.append(new_text)
+    report = []
+    highest_score = 0
 
-    vectorizer = TfidfVectorizer(stop_words="english")
+    for doc in documents:
 
-    tfidf_matrix = vectorizer.fit_transform(texts)
+        if not doc.original_text:
+            continue
 
-    similarities = cosine_similarity(tfidf_matrix[-1], tfidf_matrix[:-1])[0]
+        existing_sentences = split_sentences(doc.original_text)
 
-    similarity_report = []
+        for s1 in new_sentences:
+            for s2 in existing_sentences:
 
-    for i, score in enumerate(similarities):
+                score = similarity(s1.strip(), s2.strip())
 
-        similarity_report.append({
-            "document_id": documents[i].id,
-            "filename": documents[i].filename,
-            "similarity": round(score * 100, 2)
-        })
+                if score > 0.75:   # similarity threshold
 
-    plagiarism_score = max(similarities) * 100
+                    percent = round(score * 100, 2)
 
-    return round(plagiarism_score, 2), similarity_report
+                    report.append({
+                        "matched_sentence": s1.strip(),
+                        "source_document": doc.filename,
+                        "similarity": percent
+                    })
+
+                    if percent > highest_score:
+                        highest_score = percent
+
+    return highest_score, report

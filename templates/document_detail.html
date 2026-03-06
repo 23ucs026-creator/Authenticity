@@ -8,32 +8,39 @@
 
 <body class="container mt-5">
 
-<h3>{{ doc.filename }}</h3>
+<h2>{{ doc.filename }}</h2>
 
 <p><b>Plagiarism Score:</b> {{ doc.plagiarism_score }}%</p>
 <p><b>AI Probability:</b> {{ doc.ai_generated_prob }}%</p>
 
-<h4 class="mt-4">Similarity Report</h4>
+<hr>
 
+<h4>Matched Sentences</h4>
+
+{% if report %}
 <table class="table table-bordered">
 
-<tr>
-<th>Document</th>
-<th>Similarity</th>
-</tr>
+<thead>
+    <tr>
+        <th>Sentence</th>
+        <th>Source Document</th>
+        <th>Similarity</th>
+    </tr>
+</thead>
+
+<tbody>
 
 {% for r in report %}
-
 <tr>
-<td>{{ r.filename }}</td>
-<td>{{ r.similarity }}%</td>
+    <td>{{ r.matched_sentence }}</td>
+    <td>{{ r.source_document }}</td>
+    <td>{{ r.similarity }}%</td>
 </tr>
-
 {% endfor %}
 
+</tbody>
+
 </table>
-
-<a href="/" class="btn btn-secondary">Back</a>
-
-</body>
-</html>
+{% else %}
+<p>No matches found</p>
+{% endif %}
