@@ -19,9 +19,11 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXT
 
 
-@document_bp.route("/documents/upload", methods=["POST"])
+@document_bp.route("/documents/upload", methods=["GET","POST"])
 @jwt_required()
 def upload_document():
+    if request.method == "GET":
+        return render_template("upload.html")
 
     if "file" not in request.files:
         return jsonify({"msg": "No file part"}), 400

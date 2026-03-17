@@ -9,20 +9,21 @@ from extensions import db, jwt
 from models.user import User
 from models.document import Document
 
-from utlis.text_extractor import extract_text_from_file
-from utlis.plagiarism import calculate_plagiarism,clean_text
-from utlis.ai_detector import ai_probability_score
+from utils.text_extractor import extract_text_from_file
+from utils.plagiarism import calculate_plagiarism,clean_text
+from utils.ai_detector import ai_probability_score
+from utils.text_preprocessing import preprocess_text
 
 import io
 import base64
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utlis.plagiarism_engine import check_plagiarism
+from utils.plagiarism_engine import check_plagiarism
 from models.document import Document
 import json
 
-from utlis.analytics import generate_plagiarism_chart
+from utils.analytics import generate_plagiarism_chart
 
 
 
@@ -232,7 +233,7 @@ def create_app():
                 return "No readable text found", 400
 
             # 2️⃣ Clean text
-            processed_text = clean_text(text)
+            processed_text = preprocess_text(text)
 
             # 3️⃣ Get existing documents
             existing_docs = Document.query.all()
@@ -241,7 +242,10 @@ def create_app():
             plagiarism_score, similarity_report = check_plagiarism(processed_text, existing_docs)
 
             # 5️⃣ Calculate AI probability
-            ai_prob = ai_probability_score(processed_text)
+            ai_prob = round(ai_probability_score(processed_text), 2)
+
+            print("TEXT LENGTH:", len(processed_text))
+            print("AI SCORE:", ai_prob)
 
             # 6️⃣ Save to DB
             doc = Document(

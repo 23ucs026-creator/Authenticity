@@ -1,147 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Admin Dashboard | Authenticity</title>
+{% extends "base.html" %}
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block content %}
 
-<style>
-body{
-    background:#f5f7fb;
-}
+<h3 class="mb-4">Admin Dashboard</h3>
 
-.card{
-    border-radius:12px;
-}
+<div class="row">
 
-.stat-number{
-    font-size:28px;
-    font-weight:700;
-}
+<div class="col-md-4">
 
-</style>
+<div class="card text-center">
 
-</head>
-<body>
-
-<div class="container my-5">
-
-<h2 class="mb-4">Admin Dashboard</h2>
-
-<!-- STAT CARDS -->
-<div class="row g-4">
-
-<div class="col-md-3">
-<div class="card shadow-sm">
-<div class="card-body text-center">
-<p>Total Users</p>
-<div class="stat-number">{{ total_users }}</div>
-</div>
-</div>
-</div>
-
-<div class="col-md-3">
-<div class="card shadow-sm">
-<div class="card-body text-center">
-<p>Total Documents</p>
-<div class="stat-number">{{ total_docs }}</div>
-</div>
-</div>
-</div>
-
-<div class="col-md-3">
-<div class="card shadow-sm">
-<div class="card-body text-center">
-<p>Average Plagiarism</p>
-<div class="stat-number">{{ avg_plagiarism }}%</div>
-</div>
-</div>
-</div>
-
-<div class="col-md-3">
-<div class="card shadow-sm">
-<div class="card-body text-center">
-<p>Highest Plagiarism</p>
-<div class="stat-number text-danger">{{ max_plagiarism }}%</div>
-</div>
-</div>
-</div>
-
-</div>
-
-<hr class="my-5">
-
-<!-- ANALYTICS CHART -->
-<h4 class="mb-3">Plagiarism Analytics</h4>
-
-<div class="card shadow-sm mb-5">
-<div class="card-body text-center">
-
-<img src="{{ url_for('static', filename='charts/plagiarism_chart.png') }}" 
-class="img-fluid">
-
-</div>
-</div>
-
-<hr>
-
-<!-- DOCUMENT TABLE -->
-
-<h4 class="mb-3">Recent Documents</h4>
-
-<div class="card shadow-sm">
 <div class="card-body">
 
-<div class="table-responsive">
+<h5>Total Users</h5>
 
-<table class="table table-striped">
-
-<thead class="table-dark">
-
-<tr>
-<th>ID</th>
-<th>Filename</th>
-<th>Plagiarism %</th>
-<th>AI Probability %</th>
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for doc in documents %}
-<tr>
-
-<td>{{ doc.id }}</td>
-
-<td>{{ doc.filename }}</td>
-
-<td>
-<span class="badge bg-danger">
-{{ doc.plagiarism_score }}%
-</span>
-</td>
-
-<td>
-<span class="badge bg-warning text-dark">
-{{ doc.ai_generated_prob }}%
-</span>
-</td>
-
-</tr>
-{% endfor %}
-
-</tbody>
-
-</table>
+<h2>{{ total_users }}</h2>
 
 </div>
 
 </div>
+
+</div>
+
+<div class="col-md-4">
+
+<div class="card text-center">
+
+<div class="card-body">
+
+<h5>Total Documents</h5>
+
+<h2>{{ total_documents }}</h2>
+
+</div>
+
 </div>
 
 </div>
 
-</body>
-</html>
+<div class="col-md-4">
+
+<div class="card text-center">
+
+<div class="card-body">
+
+<h5>Average AI Score</h5>
+
+<h2>{{ avg_ai }}</h2>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

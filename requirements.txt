@@ -1,0 +1,16 @@
+flask
+flask-sqlalchemy
+flask-jwt-extended
+werkzeug
+scikit-learn
+numpy
+scipy
+nltk
+regex
+python-docx
+PyPDF2
+matplotlib
+seaborn
+python-dotenv
+tqdm
+reportlab
