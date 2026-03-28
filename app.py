@@ -35,9 +35,11 @@ def create_app():
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
     UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+    CHARTS_DIR = os.path.join(BASE_DIR, "static", "charts")
 
     os.makedirs(INSTANCE_DIR, exist_ok=True)
     os.makedirs(UPLOAD_DIR, exist_ok=True)
+    os.makedirs(CHARTS_DIR, exist_ok=True)
 
     # ---------------- CONFIG ----------------
     app.config["SECRET_KEY"] = "super-secret-key"
@@ -124,9 +126,6 @@ def create_app():
     
     @app.route("/admin")
     def admin_dashboard():
-
-        if session.get("role") != "admin":
-            return redirect(url_for("dashboard"))
 
         total_users = User.query.count()
 
